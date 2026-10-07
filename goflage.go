@@ -39,7 +39,7 @@ type recognizer struct {
 }
 
 var recognizers = []recognizer{
-	{"SECRET_KEY", regexp.MustCompile(`(?i)\b\w*(?:secret|passwd|password|token|apikey|api[_-]?key|access[_-]?key|credential|private[_-]?key)\w*\s*=\s*\S+`), 0.90, nil},
+	{"SECRET_KEY", regexp.MustCompile(`(?i)\b\w*(?:secret|passwd|password|token|apikey|api[_-]?key|access[_-]?key|credential|private[_-]?key|username|login)\w*[^\n:=]{0,24}[:=]\s*\S+`), 0.90, nil},
 	{"AWS_ACCESS_KEY", regexp.MustCompile(`\b(?:AKIA|ASIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|A3T[A-Z0-9])[A-Z0-9]{16}\b`), 0.90, nil},
 	{"API_TOKEN", regexp.MustCompile(`\b(?:sk|pk|rk|ghp|gho|ghs|xox[baprs])[-_][A-Za-z0-9]{16,}\b`), 0.85, nil},
 	{"JWT", regexp.MustCompile(`\beyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\b`), 0.90, nil},
