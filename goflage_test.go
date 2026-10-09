@@ -64,3 +64,30 @@ func TestLuhn(t *testing.T) {
 		t.Error("invalid number accepted as a card")
 	}
 }
+
+// TestScrubRedactsSSN covers the US SSN recognizer + its SSA-rules validity gate: a
+// valid dashed SSN is redacted; an invalid-range one (and a non-SSN 3-2-4 string) is not
+// falsely scrubbed.
+func TestScrubRedactsSSN(t *testing.T) {
+	out, finds := New().Scrub("Student SSN 123-45-6789 on file.")
+	if strings.Contains(out, "123-45-6789") {
+		t.Errorf("valid SSN must be redacted, got %q", out)
+	}
+	var sawSSN bool
+	for _, f := range finds {
+		if f.Entity == "US_SSN" {
+			sawSSN = true
+		}
+	}
+	if !sawSSN {
+		t.Errorf("expected a US_SSN finding, got %+v", finds)
+	}
+	// Invalid area (900+) must NOT be scrubbed as an SSN.
+	if out, _ := New().Scrub("code 900-45-6789 here"); !strings.Contains(out, "900-45-6789") {
+		t.Errorf("an invalid-range SSN must not be scrubbed, got %q", out)
+	}
+	// Area 000 is never issued.
+	if out, _ := New().Scrub("ref 000-12-3456 end"); !strings.Contains(out, "000-12-3456") {
+		t.Errorf("area 000 must not be scrubbed, got %q", out)
+	}
+}

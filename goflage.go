@@ -49,6 +49,29 @@ var recognizers = []recognizer{
 	// Credit card: broad regex, confirmed by Luhn — this checksum gate is why we
 	// get far fewer false positives than a regex-only scrubber.
 	{"CREDIT_CARD", regexp.MustCompile(`\b(?:\d[ -]?){13,19}\b`), 0.90, luhnValid},
+	// US SSN (dashed form): the SSA issuance rules gate out invalid ranges so a stray
+	// 3-2-4 digit group (a product code, a phone) is not scrubbed as an SSN. Scored
+	// above CREDIT_CARD so it wins any overlap (an SSN is 9 digits, not a card anyway).
+	{"US_SSN", regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`), 0.95, ssnValid},
+}
+
+// ssnValid applies the SSA issuance rules to a dashed SSN: area 000, 666 and 900–999 are
+// never assigned, the group is 01–99, and the serial is 0001–9999. This confirmation
+// gate keeps a random 3-2-4 digit string from being scrubbed as an SSN.
+func ssnValid(s string) bool {
+	if len(s) != 11 || s[3] != '-' || s[6] != '-' {
+		return false
+	}
+	area := s[0:3]
+	group := s[4:6]
+	serial := s[7:11]
+	if area == "000" || area == "666" || area[0] == '9' {
+		return false
+	}
+	if group == "00" || serial == "0000" {
+		return false
+	}
+	return true
 }
 
 // Analyzer detects entities. Use New() for the default recognizer set.
